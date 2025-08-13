@@ -35,8 +35,8 @@ def main():
         
         print("📚 ArXivから最新のAI論文を取得中...")
         
-        # ArXivから最新の論文を取得
-        papers = arxiv_client.fetch_recent_ai_papers(days_back=1, max_results=50)
+        # ArXivから最新の論文を取得（重要論文が少ない場合に備えて多めに取得）
+        papers = arxiv_client.fetch_recent_ai_papers(days_back=1, max_results=100)
         
         if not papers:
             print("⚠️  論文が見つかりませんでした")
@@ -45,17 +45,35 @@ def main():
         
         print(f"✅ {len(papers)}件の論文を取得しました")
         
-        # 重要な論文をフィルタリング
-        important_papers = arxiv_client.filter_important_papers(papers, min_importance_keywords=1)
+        # 重要な論文をフィルタリング（厳格な基準：スコア5.0以上）
+        important_papers = arxiv_client.filter_important_papers(papers, min_importance_score=5.0)
+        
+        # デバッグ情報：上位10件のスコア表示
+        if important_papers:
+            print("🏆 重要度トップ論文のスコア:")
+            for i, paper in enumerate(important_papers[:10], 1):
+                print(f"  {i}. スコア {paper['importance_score']}: {paper['title'][:80]}...")
+        
+        # 重要論文が少なすぎる場合は基準を緩める
+        if len(important_papers) < 3:
+            print("⚠️  厳格基準では重要論文が少なすぎます。基準を緩めて再検索...")
+            important_papers = arxiv_client.filter_important_papers(papers, min_importance_score=3.0)
+            print(f"🔍 緩和基準で{len(important_papers)}件の重要論文を選出")
         
         if not important_papers:
             print("⚠️  重要な論文が見つかりませんでした")
-            return False
+            # 最低限、基本キーワードでフィルタリング
+            important_papers = arxiv_client.filter_important_papers(papers, min_importance_score=1.0)[:5]
+            if important_papers:
+                print(f"📋 最低基準で{len(important_papers)}件の論文を選出")
+            else:
+                slack_client.send_error_notification("重要な論文が見つかりませんでした")
+                return False
             
-        print(f"🔍 {len(important_papers)}件の重要論文を選出しました")
+        print(f"🔍 最終的に{len(important_papers)}件の重要論文を選出しました")
         
-        # 上位論文を要約（最大5件）
-        top_papers = important_papers[:5]
+        # 上位論文を要約（最大3件に限定してより質を重視）
+        top_papers = important_papers[:3]
         print(f"📝 上位{len(top_papers)}件の論文を要約中...")
         
         summaries = openai_client.summarize_multiple_papers(top_papers)
