@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 from arxiv_client import ArxivClient
 from openai_client import OpenAIClient
 from slack_client import SlackClient
+from trend_analyzer import TrendAnalyzer
 
 
 def main():
@@ -32,6 +33,7 @@ def main():
         arxiv_client = ArxivClient()
         openai_client = OpenAIClient()
         slack_client = SlackClient()
+        trend_analyzer = TrendAnalyzer()
         
         print("📚 ArXivから最新のAI論文を取得中...")
         
@@ -85,12 +87,18 @@ def main():
         
         print(f"✅ {len(summaries)}件の要約を生成しました")
         
-        # 日次要約メッセージを作成
+        # トレンド分析を実行
+        print("📊 トレンド分析を実行中...")
+        trends = trend_analyzer.extract_trends(papers)  # 全論文からトレンド抽出
+        trend_summary = trend_analyzer.generate_trend_summary(trends)
+        
+        # 日次要約メッセージを作成（トレンド情報を含む）
         daily_summary = openai_client.create_daily_summary(summaries)
+        combined_message = daily_summary + "\n\n---\n\n" + trend_summary
         
         # Slackに送信
         print("📤 Slackに送信中...")
-        success = slack_client.send_message(daily_summary)
+        success = slack_client.send_message(combined_message)
         
         if success:
             print("✅ Slackへの送信が完了しました！")
