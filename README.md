@@ -40,6 +40,8 @@ pip install -r requirements.txt
 
 ### 3. 環境変数の設定
 
+⚠️ **重要**: 実際のAPI キーやWebhook URLは絶対にGitリポジトリにコミットしないでください。
+
 ```bash
 # .envファイルを作成
 cp .env.example .env
@@ -50,9 +52,17 @@ vi .env
 
 `.env`ファイルの設定例：
 ```env
-OPENAI_API_KEY=sk-proj-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-SLACK_WEBHOOK_URL=https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX
+# OpenAI Platform（https://platform.openai.com/）で取得
+OPENAI_API_KEY=実際のOpenAI_APIキーをここに入力
+
+# Slack App設定で生成されたWebhook URLをここに入力
+SLACK_WEBHOOK_URL=実際のSlack_Webhook_URLをここに入力
 ```
+
+💡 **セキュリティのポイント**:
+- `.env`ファイルは`.gitignore`で除外済み
+- 実際の値はプレースホルダーと置き換えて使用
+- API キーは定期的にローテーションすることを推奨
 
 ## 🚀 使い方
 
